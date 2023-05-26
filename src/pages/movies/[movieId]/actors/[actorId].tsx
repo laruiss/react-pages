@@ -1,5 +1,3 @@
-import { useParams } from "react-router-dom"
-
 export default function () {
   const {actorId, movieId} = useParams()
   return (

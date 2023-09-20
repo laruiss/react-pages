@@ -19,19 +19,54 @@ jobs:
       VITE_APP_GIT_SHA: ${{github.sha}}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: 18
-      - name: Set env.BRANCH
-        run: echo "BRANCH=$(echo $GITHUB_REF | cut -d'/' -f 3)" >> $GITHUB_ENV
-      - name: Print GITHUB_REF & BRANCH
-        run: echo "BRANCH = $BRANCH" && echo "GITHUB_REF = $GITHUB_REF"
-      - name: Is main?
-        if: env.BRANCH == 'main'
-        run: echo "This is 'main' branch"
+      - name: Print commits
+        run: (git log HEAD...origin/$GITHUB_BASE_REF --name-only --pretty=format:)
+      - name: Récupérer si workflows a été modifié
+        id: is_workflows
+        run: |
+          if git log HEAD...origin/$GITHUB_BASE_REF --name-only --pretty=format: | sort -u | grep -q '^.github/workflows/'; then
+            is_workflow_modified="true"
+          fi
+          echo "is_workflow_modified=$is_workflow_modified" >> $GITHUB_OUTPUT
+      - name: Afficher is_workflow_modified
+        run: echo "the value of is_workflow_modified is ${{ steps.is_workflows.outputs.is_workflow_modified }}"
+      - name: Afficher si workflows a été modifié
+        if: steps.is_workflows.outputs.is_workflow_modified
+        run: echo "is_workflow_modified true"
+      - name: Récupérer si server a été modifié
+        id: is_server_modified
+        run: |
+          if git log HEAD...origin/$GITHUB_BASE_REF --name-only --pretty=format: | sort -u | grep -q '^apps/server/'; then
+            is_server_modified="true"
+          fi
+          echo "is_server_modified=$is_server_modified" >> $GITHUB_OUTPUT
+      - name: Afficher is_server_modified
+        run: echo "the value of is_server_modified is ${{ steps.is_workflows.outputs.is_server_modified }}"
+      - name: Afficher si server a été modifié
+        if: steps.is_server_modified.outputs.is_workflow_modified
+        run: echo "is_server_modified true"
       # - name: Install dependencies
       #   run: npm ci
       # - name: Test all
       #   run: npm test
+  test2:
+    if: startsWith(github.head_ref, 'ci')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Is RNF?
+        if: startsWith(github.head_ref, 'rnf/')
+        run: echo "github.head_ref = ${{ github.head_ref }}"
+      - name: Is workflow?
+        if: contains(github.head_ref, 'workflow')
+        run: echo "This is a 'workflow' branch"
+      - name: Is CI?
+        if: startsWith(github.head_ref, 'ci/')
+        run: echo "This is a 'ci' branch"

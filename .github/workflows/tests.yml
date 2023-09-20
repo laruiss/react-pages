@@ -1,0 +1,37 @@
+name: Unit Tests
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+jobs:
+  tests:
+    name: Run unit tests
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+
+    env:
+      VITE_APP_GIT_TAG: ${{github.ref}}
+      VITE_APP_GIT_SHA: ${{github.sha}}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18
+      - name: Set env.BRANCH
+        run: echo "BRANCH=$(echo $GITHUB_REF | cut -d'/' -f 3)" >> $GITHUB_ENV
+      - name: Print GITHUB_REF & BRANCH
+        run: echo "BRANCH = $BRANCH" && echo "GITHUB_REF = $GITHUB_REF"
+      - name: Is main?
+        if: env.BRANCH == 'main'
+        run: echo "This is 'main' branch"
+      # - name: Install dependencies
+      #   run: npm ci
+      # - name: Test all
+      #   run: npm test

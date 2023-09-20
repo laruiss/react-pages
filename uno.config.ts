@@ -12,6 +12,10 @@ export default defineConfig({
     presetUno(),
     presetAttributify(),
     presetIcons({
+      extraProperties: {
+        display: 'inline-block',
+        'vertical-align': 'middle',
+      },
       scale: 1,
       warn: true,
     }),
